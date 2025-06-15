@@ -1,4 +1,3 @@
-
 const express = require('express');
 const Sequelize = require('sequelize');
 
@@ -38,8 +37,8 @@ const Messages = sequelize.define('messages', {
   message: Sequelize.TEXT
 },
   {
-    // timestamps: false,      // disable the default timestamps
-    freezeTableName: true   // stick to the table name we define
+    // timestamps: false,        // disable the default timestamps
+    freezeTableName: true     // stick to the table name we define
   }
 );
 
@@ -47,25 +46,29 @@ const Messages = sequelize.define('messages', {
 (async () => {
   try {
     await sequelize.sync({ force: false, alter: true });
-    setupRoute();
+    setupRoute(); // データベース同期後にルートを設定
     console.log("Database synchronized successfully.");
   } catch (error) {
     console.error("Error synchronizing the database:", error);
   }
-}
-)();
+})();
 
-lastMessage = "";
+let lastMessage = ""; // lastMessageはletで宣言
+
 function setupRoute() {
   console.log("db connection succeeded");
+
+  // トップページルート
   app.get('/', (req, res) => {
     res.render('top.ejs');
   });
 
+  // メッセージ追加ページルート (GET)
   app.get('/add', (req, res) => {
     res.render('add.ejs', { lastMessage: lastMessage });
   });
 
+  // メッセージ追加処理ルート (POST)
   app.post('/add', async (req, res) => {
     let newMessage = new Messages({
       message: req.body.text
@@ -75,49 +78,71 @@ function setupRoute() {
       lastMessage = req.body.text;
       res.render('add.ejs', { lastMessage: lastMessage });
     } catch (error) {
-      res.send("error");
+      console.error("Error adding message:", error); // エラーログを追加
+      res.status(500).send("エラーが発生しました: メッセージを追加できませんでした"); // ステータスコードとメッセージを明確に
     }
   });
 
+  // 全メッセージ表示ルート
   app.get('/view', async (req, res) => {
     try {
-      result = await Messages.findAll();
+      const result = await Messages.findAll(); // const を使用
       console.log(result);
-      allMessages = result.map((e) => {
-        return e.message + " " + e.createdAt;
+      const allMessages = result.map((e) => { // const を使用
+        return e.message + " (" + e.createdAt.toLocaleString() + ")"; // 日付の表示を改善
       });
       res.render('view.ejs', { messages: allMessages });
     } catch (error) {
-      res.send("error");
+      console.error("Error viewing messages:", error); // エラーログを追加
+      res.status(500).send("エラーが発生しました: メッセージを表示できませんでした");
     }
   });
-};
 
-app.get('/search', (req, res) => {
-    res.render('search.ejs', { results: [] });
+  // **** 検索ルートの定義をここsetupRoute()関数内に追加/移動 ****
+
+  // 検索フォーム表示ルート (GET)
+  app.get('/search', (req, res) => {
+    res.render('search.ejs', { results: [], searchKeyword: '' }); // 検索キーワードを初期値として追加
   });
 
+  // 検索処理ルート (POST)
   app.post('/search', async (req, res) => {
     const Op = Sequelize.Op;
+    const searchText = req.body.searchText || ''; // searchTextが存在しない場合の対策
+    let searchResults = [];
+
     try {
-      result = await Messages.findAll({
-        where: {
-          message: {
-            [Op.regexp]: req.body.searchText
+      // 検索キーワードが空でなければ検索を実行
+      if (searchText.trim() !== '') {
+        const result = await Messages.findAll({
+          where: {
+            message: {
+              [Op.regexp]: searchText // 正規表現検索
+            }
           }
-        }
-      })
-      let searchResults = result.map((e) => {
-        return e.message + " " + e.createdAt;
-      });
-      res.render('search.ejs', { results: searchResults })
+        });
+        searchResults = result.map((e) => {
+          return e.message + " (" + e.createdAt.toLocaleString() + ")"; // 日付の表示を改善
+        });
+      }
+
+      // 検索結果と入力されたキーワードをレンダリング
+      res.render('search.ejs', { results: searchResults, searchKeyword: searchText });
     }
     catch (error) {
       console.error("Error during search:", error);
-      res.send("error");
+      // エラー発生時も search.ejs をレンダリングし、エラーメッセージを表示
+      res.render('search.ejs', { results: [], searchKeyword: searchText, error: "検索中にエラーが発生しました。" });
     }
   });
 
-app.listen(process.env.PORT || PORT);
+  // **** 検索ルートの定義はここまで ****
 
-  
+} // setupRoute() 関数の終わり
+
+
+// アプリケーションがポートをリッスンし始める
+// setupRoute()関数が呼び出された後に、app.listen()が実行されるようにする
+app.listen(process.env.PORT || PORT, () => {
+  console.log(`Server is listening on http://localhost:${process.env.PORT || PORT}`);
+});

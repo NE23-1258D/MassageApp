@@ -3,10 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>検索ページ</title>
+    <title>メッセージ検索</title>
 </head>
 <body>
-    <h1>検索フォーム</h1>
-    <p>ここに検索フォームと結果が表示されます。</p>
+    <h1>メッセージ検索</h1>
+
+    <form action="/search" method="POST">
+        <input type="text" name="searchText" placeholder="検索キーワードを入力..." value="<%= typeof searchKeyword !== 'undefined' ? searchKeyword : '' %>">
+        <button type="submit">検索</button>
+    </form>
+
+    <h2>検索結果:</h2>
+    <% if (results && results.length > 0) { %>
+        <ul>
+            <% results.forEach(function(result) { %>
+                <li><%= result %></li>
+            <% }); %>
+        </ul>
+    <% } else if (typeof results !== 'undefined' && results.length === 0) { %>
+        <p>一致するメッセージは見つかりませんでした。</p>
+    <% } else { %>
+        <p>上記フォームにキーワードを入力して検索してください。</p>
+    <% } %>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+        <p style="color: red;"><%= error %></p>
+    <% } %>
 </body>
 </html>
