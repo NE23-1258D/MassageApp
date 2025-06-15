@@ -1,0 +1,20 @@
+
+{
+  "name": "messageapp",
+  "version": "1.0.0",
+  "description": "Node.js on Docker + Express + EJS + Sequelize + PG",
+  "author": "ne231258",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3",
+    "ejs": "^3.1.10",
+    "sequelize": "^6.37.7",
+    "pg": "^8.13.3"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
