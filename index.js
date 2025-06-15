@@ -94,3 +94,28 @@ function setupRoute() {
 };
 
 app.listen(process.env.PORT || PORT);
+
+  app.get('/search', (req, res) => {
+    res.render('search.ejs', { results: [] });
+  });
+
+  app.post('/search', async (req, res) => {
+    const Op = Sequelize.Op;
+    try {
+      result = await Messages.findAll({
+        where: {
+          message: {
+            [Op.regexp]: req.body.searchText
+          }
+        }
+      })
+      let searchResults = result.map((e) => {
+        return e.message + " " + e.createdAt;
+      });
+      res.render('search.ejs', { results: searchResults })
+    }
+    catch (error) {
+      console.error("Error during search:", error);
+      res.send("error");
+    }
+  });
