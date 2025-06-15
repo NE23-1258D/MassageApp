@@ -93,9 +93,7 @@ function setupRoute() {
   });
 };
 
-app.listen(process.env.PORT || PORT);
-
-  app.get('/search', (req, res) => {
+app.get('/search', (req, res) => {
     res.render('search.ejs', { results: [] });
   });
 
@@ -119,3 +117,7 @@ app.listen(process.env.PORT || PORT);
       res.send("error");
     }
   });
+
+app.listen(process.env.PORT || PORT);
+
+  
